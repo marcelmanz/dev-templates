@@ -51,6 +51,7 @@
             olm
             pkg-config
             go-tools
+            gcc
           ];
 
           # Set CGO flags for olm
