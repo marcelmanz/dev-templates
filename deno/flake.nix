@@ -1,5 +1,5 @@
 {
-  description = "A Nix-flake-based Open Policy Agent development environment";
+  description = "A Nix-flake-based Deno development environment";
 
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1"; # unstable Nixpkgs
 
@@ -28,8 +28,7 @@
         {
           default = pkgs.mkShellNoCC {
             packages = with pkgs; [
-              open-policy-agent
-              conftest
+              deno
               self.formatter.${system}
             ];
           };

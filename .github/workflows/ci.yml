@@ -27,12 +27,9 @@ jobs:
       - uses: DeterminateSystems/determinate-nix-action@main
       - uses: DeterminateSystems/flakehub-cache-action@main
       - name: Check formatting
-        run: |
-          git ls-files '**/*.nix' | xargs nix develop --command nixfmt --check
+        run: nix develop --command check-formatting
       - name: Flake check
         run: nix develop --command check
-      - name: Build all
-        run: nix develop --command build
 
   determinate-ci:
     needs: check

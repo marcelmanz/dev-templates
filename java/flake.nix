@@ -1,17 +1,17 @@
 {
   description = "A Nix-flake-based Java development environment";
 
-  inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
+  inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1"; # unstable Nixpkgs
 
   outputs =
-    inputs:
+    { self, ... }@inputs:
+
     let
-      javaVersion = 23; # Change this value to update the whole stack
+      javaVersion = 25; # Change this value to update the whole stack
 
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
-        "x86_64-darwin"
         "aarch64-darwin"
       ];
       forEachSupportedSystem =
@@ -19,6 +19,7 @@
         inputs.nixpkgs.lib.genAttrs supportedSystems (
           system:
           f {
+            inherit system;
             pkgs = import inputs.nixpkgs {
               inherit system;
               overlays = [ inputs.self.overlays.default ];
@@ -40,9 +41,9 @@
         };
 
       devShells = forEachSupportedSystem (
-        { pkgs }:
+        { pkgs, system }:
         {
-          default = pkgs.mkShell {
+          default = pkgs.mkShellNoCC {
             packages = with pkgs; [
               gcc
               gradle
@@ -51,6 +52,7 @@
               ncurses
               patchelf
               zlib
+              self.formatter.${system}
             ];
 
             shellHook =
@@ -64,5 +66,7 @@
           };
         }
       );
+
+      formatter = forEachSupportedSystem ({ pkgs, ... }: pkgs.nixfmt);
     };
 }

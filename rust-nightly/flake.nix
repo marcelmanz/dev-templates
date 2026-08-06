@@ -1,21 +1,21 @@
 {
-  description = "A Nix-flake-based Rust development environment";
+  description = "A Nix-flake-based Rust nightly development environment";
 
   inputs = {
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1"; # unstable Nixpkgs
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
     fenix = {
-      url = "https://flakehub.com/f/nix-community/fenix/0.1";
+      url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
   outputs =
-    { self, ... }@inputs:
-
+    inputs:
     let
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
+        "x86_64-darwin"
         "aarch64-darwin"
       ];
       forEachSupportedSystem =
@@ -23,7 +23,6 @@
         inputs.nixpkgs.lib.genAttrs supportedSystems (
           system:
           f {
-            inherit system;
             pkgs = import inputs.nixpkgs {
               inherit system;
               overlays = [
@@ -38,7 +37,7 @@
         rustToolchain =
           with inputs.fenix.packages.${prev.stdenv.hostPlatform.system};
           combine (
-            with stable;
+            with latest;
             [
               clippy
               rustc
@@ -50,7 +49,7 @@
       };
 
       devShells = forEachSupportedSystem (
-        { pkgs, system }:
+        { pkgs }:
         {
           default = pkgs.mkShell {
             packages = with pkgs; [
@@ -61,7 +60,6 @@
               cargo-edit
               cargo-watch
               rust-analyzer
-              self.formatter.${system}
             ];
 
             env = {
@@ -71,7 +69,5 @@
           };
         }
       );
-
-      formatter = forEachSupportedSystem ({ pkgs, ... }: pkgs.nixfmt);
     };
 }

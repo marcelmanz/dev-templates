@@ -13,6 +13,9 @@
     devShells.${system}.default = pkgs.mkShell {
       name = "network-manager-dev";
 
+      # Make CMake always emit build/compile_commands.json for clangd.
+      CMAKE_EXPORT_COMPILE_COMMANDS = "ON";
+
       packages = with pkgs; [
         # ── Toolchain ────────────────────────────────────────────────────
         gcc
@@ -20,6 +23,10 @@
         gnumake
         pkg-config
         git
+
+        # ── Debugging & D-Bus Mocking ────────────────────────────────────
+        d-spy # Modern D-Bus viewer (replaces d-feet)
+        (python3.withPackages (ps: [ps.python-dbusmock])) # Mock hardware
 
         # ── project library dependencies ─────────────────────────────────
         # sdbus-c++ v2 — matches Docker/CI image (v2.0.0).
@@ -40,16 +47,13 @@
       ];
 
       shellHook = ''
-        echo ""
-        echo "  wsnetworker dev shell  •  GCC $(gcc --version | head -1 | grep -oP '\d+\.\d+\.\d+' | head -1)"
-        echo ""
-        echo "  make module_build                  build + tests (native)"
-        echo "  make module_debug                  debug build"
-        echo "  make module_run_test               run unit tests"
-        echo "  make module_build_coverage         build with gcov instrumentation"
-        echo "  make module_coverage_report_html   HTML coverage report → build/coverage/"
-        echo "  make module_clean                  rm -rf build/"
-        echo ""
+        # Alias to properly run dbusmock with sudo while keeping the Nix python path
+        alias mock-modem='sudo $(which python3) -m dbusmock --system --template modemmanager'
+
+        # Symlink compile_commands.json to repo root for clangd, if build exists.
+        if [ -f build/compile_commands.json ] && [ ! -e compile_commands.json ]; then
+          ln -sf build/compile_commands.json compile_commands.json
+        fi
       '';
     };
   };

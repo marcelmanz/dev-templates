@@ -1,15 +1,15 @@
 {
   description = "A Nix-flake-based PlatformIO development environment";
 
-  inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
+  inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1"; # unstable Nixpkgs
 
   outputs =
-    inputs:
+    { self, ... }@inputs:
+
     let
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
-        "x86_64-darwin"
         "aarch64-darwin"
       ];
       forEachSupportedSystem =
@@ -17,15 +17,16 @@
         inputs.nixpkgs.lib.genAttrs supportedSystems (
           system:
           f {
+            inherit system;
             pkgs = import inputs.nixpkgs { inherit system; };
           }
         );
     in
     {
       devShells = forEachSupportedSystem (
-        { pkgs }:
+        { pkgs, system }:
         {
-          default = pkgs.mkShell {
+          default = pkgs.mkShellNoCC {
             packages =
               with pkgs;
               [
@@ -40,8 +41,9 @@
                 platformio
                 vcpkg
                 vcpkg-tool
+                self.formatter.${system}
               ]
-              ++ pkgs.lib.optionals (system != "aarch64-darwin") [ gdb ];
+              ++ pkgs.lib.optionals (stdenv.hostPlatform.system != "aarch64-darwin") [ gdb ];
 
             shellHook = ''
               export PLATFORMIO_CORE_DIR=$PWD/.platformio
@@ -49,5 +51,7 @@
           };
         }
       );
+
+      formatter = forEachSupportedSystem ({ pkgs, ... }: pkgs.nixfmt);
     };
 }
