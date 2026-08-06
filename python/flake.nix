@@ -32,7 +32,7 @@
     * present. For safety, removal should
     * be a manual step, even if trivial.
     */
-    version = "3.13";
+    version = "3.11";
   in {
     devShells = forEachSupportedSystem (
       {pkgs}: let
